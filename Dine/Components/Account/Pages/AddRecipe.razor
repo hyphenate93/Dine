@@ -14,8 +14,10 @@
 
         <!-- Image Upload Section -->
         <div class="image-section">
-            <label>Recipe Image:</label>
-            <InputFile OnChange="HandleImageUpload" />
+            <label>Recipe Image URL:</label>
+            <InputText @bind-Value="NewRecipe.ImageUrl" placeholder="Enter image URL" class="form-control" />
+            <ValidationMessage For="@(() => NewRecipe.ImageUrl)" />
+
             @if (!string.IsNullOrEmpty(NewRecipe.ImageUrl))
             {
                 <img src="@NewRecipe.ImageUrl" alt="Recipe Image" class="recipe-image" />
@@ -95,7 +97,7 @@
     private void AddIngredient()
     {
         // Create a new ingredient and add it to the list
-        Ingredients.Add(new Ingredient { RecipeId = NewRecipe.Id });
+        Ingredients.Add(new Ingredient { Id = 0, RecipeId = NewRecipe.Id });
     }
 
     private void RemoveIngredient(Ingredient ingredient)
@@ -131,7 +133,7 @@
         var success = await RecipeService.CreateRecipeAsync(NewRecipe);
         if (success)
         {
-            Navigation.NavigateTo("/recipes");
+                Navigation.NavigateTo("/");
         }
         else
         {
