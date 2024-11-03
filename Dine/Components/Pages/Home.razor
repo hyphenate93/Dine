@@ -1,0 +1,200 @@
+﻿@page "/"
+@using Dine.Services
+@using System;
+@inject RecipeService RecipeService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components
+@using Dine.Models
+@rendermode InteractiveServer
+
+<script src="~/js/blazorHelpers.js"></script>
+
+<h3>Recipe List</h3>
+
+<div class="recipe-list" @onscroll="HandleScroll">
+    @if (Recipes != null && Recipes.Count > 0)
+    {
+        @foreach (var recipe in Recipes)
+        {
+            <div class="recipe-card" @onclick="(() => ShowRecipeDetail(recipe))">
+                <img src="@recipe.ImageUrl" alt="@recipe.Title" class="recipe-card-image" />
+                <div class="recipe-card-content">
+                    <h4>@recipe.Title</h4>
+                    <p>@recipe.Description</p>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p>Loading recipes...</p>
+    }
+
+    @if (Loading)
+    {
+        <div class="loading-indicator">Loading more recipes...</div>
+    }
+</div>
+
+@if (ShowModal && CurrentRecipe != null)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <button class="close-button" @onclick="CloseModal">X</button>
+            <h2>@CurrentRecipe.Title</h2>
+            <img src="@CurrentRecipe.ImageUrl" alt="@CurrentRecipe.Title" class="recipe-image" />
+            <p>@CurrentRecipe.Description</p>
+            <h4>Ingredients:</h4>
+            <ul>
+                @foreach (var ingredient in CurrentRecipe.Ingredients)
+                {
+                    <li>@ingredient.Quantity @ingredient.Unit of @ingredient.Name</li>
+                }
+            </ul>
+            <h4>Instructions:</h4>
+            <ol>
+                @foreach (var instruction in CurrentRecipe.Instructions)
+                {
+                    <li>@instruction.InstructionText</li>
+                }
+            </ol>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Recipe> Recipes = new List<Recipe>();
+    private int PageNumber = 1;
+    private bool Loading = false;
+    private const int PageSize = 5;
+
+    private ElementReference recipeListElement;
+
+    private bool ShowModal = false;
+    private Recipe? CurrentRecipe;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecipes();
+    }
+
+    private async Task LoadRecipes()
+    {
+        Loading = true;
+        var newRecipes = await RecipeService.GetRecipesAsync(PageNumber, PageSize);
+
+        if (newRecipes.Any())
+        {
+            Recipes.AddRange(newRecipes);
+            PageNumber++;
+        }
+
+        Loading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleScroll(EventArgs e)
+    {
+        var scrollHeight = await JSRuntime.InvokeAsync<int>("blazorHelpers.getScrollHeight", recipeListElement);
+        var scrollTop = await JSRuntime.InvokeAsync<int>("blazorHelpers.getScrollTop", recipeListElement);
+        var clientHeight = await JSRuntime.InvokeAsync<int>("blazorHelpers.getClientHeight", recipeListElement);
+
+        if ((scrollHeight - scrollTop) <= clientHeight + 100)
+        {
+            await LoadRecipes();
+        }
+    }
+
+    private void ShowRecipeDetail(Recipe recipe)
+    {
+        CurrentRecipe = recipe;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+    }
+}
+<style>
+    /* Recipe Cards */
+    .recipe-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .recipe-card {
+        width: 200px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .recipe-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .recipe-card-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+    }
+
+    .recipe-card-content {
+        padding: 8px;
+    }
+
+    .recipe-card-content h4 {
+        margin: 8px 0;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    .recipe-card-content p {
+        margin: 0;
+        color: #555;
+        font-size: 0.9em;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 8px;
+        padding: 24px;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .close-button {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: transparent;
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+        color: #333;
+    }
+
+</style>

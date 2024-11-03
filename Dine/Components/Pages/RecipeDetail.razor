@@ -1,0 +1,98 @@
+﻿@page "/recipe/{RecipeId:int}"
+@inject RecipeService RecipeService
+@inject NavigationManager Navigation
+@using Dine.Models
+@using Dine.Services
+@rendermode InteractiveServer
+
+@code {
+    [Parameter] public int RecipeId { get; set; }
+    private Recipe? CurrentRecipe; // Change RecipeDetail to CurrentRecipe and make it nullable
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentRecipe = await RecipeService.GetRecipeByIdAsync(RecipeId);
+    }
+}
+
+@if (CurrentRecipe != null)
+{
+    <div class="recipe-detail">
+        <h2>@CurrentRecipe.Title</h2>
+        <img src="@CurrentRecipe.ImageUrl" alt="@CurrentRecipe.Title" class="recipe-image" />
+        <p>@CurrentRecipe.Description</p>
+        <h4>Ingredients:</h4>
+        <ul>
+            @foreach (var ingredient in CurrentRecipe.Ingredients)
+            {
+                <li>@ingredient.Quantity @ingredient.Unit of @ingredient.Name</li>
+            }
+        </ul>
+        <h4>Instructions:</h4>
+        <ol>
+            @foreach (var instruction in CurrentRecipe.Instructions)
+            {
+                <li>@instruction.InstructionText</li>
+            }
+        </ol>
+        <button @onclick="NavigateToList">Back to List</button>
+    </div>
+}
+else
+{
+    <p>Loading recipe...</p>
+}
+
+@code {
+    private void NavigateToList()
+    {
+        Navigation.NavigateTo("/", true); // Force reload the homepage
+    }
+
+}
+
+
+<style>
+    .recipe-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-height: 80vh;
+        overflow-y: scroll;
+    }
+
+    .recipe-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        width: 200px;
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+
+    .recipe-card:hover {
+        transform: scale(1.05);
+    }
+
+    .recipe-card img {
+        width: 100%;
+        height: 120px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .recipe-card-content {
+        padding: 10px;
+    }
+
+    .recipe-detail {
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .loading-indicator {
+        text-align: center;
+        padding: 20px;
+    }
+
+</style>

@@ -1,0 +1,154 @@
+﻿@page "/create-recipe"
+@inject RecipeService RecipeService
+@inject NavigationManager Navigation
+@using Dine.Services
+@using Microsoft.AspNetCore.Components
+@using Dine.Models
+@rendermode InteractiveServer
+
+<h3>Add New Recipe</h3>
+
+<div class="recipe-card">
+    <EditForm Model="@NewRecipe" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <!-- Image Upload Section -->
+        <div class="image-section">
+            <label>Recipe Image:</label>
+            <InputFile OnChange="HandleImageUpload" />
+            @if (!string.IsNullOrEmpty(NewRecipe.ImageUrl))
+            {
+                <img src="@NewRecipe.ImageUrl" alt="Recipe Image" class="recipe-image" />
+            }
+        </div>
+
+        <!-- Title and Description -->
+        <div class="details-section">
+            <label>Title:</label>
+            <InputText @bind-Value="NewRecipe.Title" class="form-control" />
+            <ValidationMessage For="@(() => NewRecipe.Title)" />
+
+            <label>Description:</label>
+            <InputTextArea @bind-Value="NewRecipe.Description" class="form-control" />
+            <ValidationMessage For="@(() => NewRecipe.Description)" />
+        </div>
+
+        <!-- Ingredients Section -->
+        <div class="ingredients-section">
+            <h4>Ingredients</h4>
+            @if (Ingredients.Count == 0)
+            {
+                <p>No ingredients added yet. Click "Add Ingredient" to start.</p>
+            }
+            else
+            {
+                @foreach (var ingredient in Ingredients)
+                {
+                    <div class="ingredient-item">
+                        <InputText @bind-Value="ingredient.Name" placeholder="Ingredient Name" />
+                        <InputText @bind-Value="ingredient.Quantity" placeholder="Quantity" />
+                        <InputText @bind-Value="ingredient.Unit" placeholder="Unit (e.g., grams)" />
+                        <button type="button" @onclick="@(() => RemoveIngredient(ingredient))">Remove</button>
+                    </div>
+                }
+            }
+            <button type="button" @onclick="AddIngredient">Add Ingredient</button>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="instructions-section">
+            <h4>Instructions</h4>
+            @if (Instructions.Count == 0)
+            {
+                <p>No instructions added yet. Click "Add Instruction" to start.</p>
+            }
+            else
+            {
+                @foreach (var instruction in Instructions)
+                {
+                    <div class="instruction-item">
+                        <label>Step @instruction.StepNumber</label>
+                        <InputTextArea @bind-Value="instruction.InstructionText" class="form-control" />
+                        <button type="button" @onclick="@(() => RemoveInstruction(instruction))">Remove</button>
+                    </div>
+                }
+            }
+            <button type="button" @onclick="AddInstruction">Add Instruction</button>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Save Recipe</button>
+    </EditForm>
+</div>
+
+@code {
+    private Recipe NewRecipe = new Recipe
+        {
+            Ingredients = new List<Ingredient>(), // Initialize the list
+            Instructions = new List<Instruction>() // Initialize the list
+        };
+
+    private List<Ingredient> Ingredients = new List<Ingredient>(); // Initialize ingredient list
+    private List<Instruction> Instructions = new List<Instruction>(); // Initialize instruction list
+
+    // Method to handle adding new ingredients dynamically
+    private void AddIngredient()
+    {
+        // Create a new ingredient and add it to the list
+        Ingredients.Add(new Ingredient { RecipeId = NewRecipe.Id });
+    }
+
+    private void RemoveIngredient(Ingredient ingredient)
+    {
+        Ingredients.Remove(ingredient);
+    }
+
+    // Method to handle adding new instructions dynamically
+    private void AddInstruction()
+    {
+        Instructions.Add(new Instruction { StepNumber = Instructions.Count + 1, RecipeId = NewRecipe.Id });
+    }
+
+    private void RemoveInstruction(Instruction instruction)
+    {
+        Instructions.Remove(instruction);
+        // Update step numbers
+        int index = 1;
+        foreach (var inst in Instructions)
+        {
+            inst.StepNumber = index++;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+
+       
+        NewRecipe.Ingredients = Ingredients;
+        NewRecipe.Instructions = Instructions;
+        var success = await RecipeService.CreateRecipeAsync(NewRecipe);
+        if (success)
+        {
+            Navigation.NavigateTo("/recipes");
+        }
+        else
+        {
+            // Handle failure (e.g., user not authenticated)
+        }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        // Handle image upload logic here
+        var file = e.File;
+        NewRecipe.ImageUrl = "/images/sample-image.png"; // Placeholder for actual uploaded URL
+    }
+}

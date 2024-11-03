@@ -1,0 +1,132 @@
+﻿@page "/auth"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Dine.Models
+@using Dine.Services
+@using System.Security.Claims
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject RecipeService RecipeService
+@rendermode InteractiveServer
+
+<PageTitle>Your Weekly Menu</PageTitle>
+
+<h1>Your Weekly Food Menu</h1>
+
+<button class="generate-button" @onclick="GenerateWeeklyMenu">Generate Weekly Menu</button>
+
+@if (WeeklyMenu != null && WeeklyMenu.Count > 0)
+{
+    <table class="weekly-menu-table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Recipe</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var day in WeeklyMenu)
+            {
+                <tr>
+                    <td>@day.Key</td>
+                    <td>@day.Value.Title</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No menu generated yet.</p>
+}
+
+@inject NavigationManager NavigationManager
+
+<button class="btn btn-lg btn-primary" @onclick="NavigateToAddRecipe">Add New Recipe</button>
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+@code {
+    private Dictionary<string, Recipe> WeeklyMenu = new();
+    private void NavigateToAddRecipe()
+    {
+        NavigationManager.NavigateTo("/create-recipe");
+    }
+    // Generates a weekly menu with recipes either from the user's collection or the entire database.
+    private async Task GenerateWeeklyMenu()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        List<Recipe> recipesToChooseFrom;
+
+    // Retrieve user's own recipes or use all recipes if the user has none
+        var userRecipes = await RecipeService.GetRecipesByUserAsync(userId);
+        if (userRecipes != null && userRecipes.Count > 0)
+        {
+            recipesToChooseFrom = userRecipes;
+        }
+        else
+        {
+            recipesToChooseFrom = await RecipeService.GetRecipesAsync();
+        }
+
+        WeeklyMenu = GetRandomMenu(recipesToChooseFrom);
+    }
+
+
+    // Randomly assign a recipe for each day of the week
+    private Dictionary<string, Recipe> GetRandomMenu(List<Recipe> recipes)
+    {
+        var random = new Random();
+        var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        var menu = new Dictionary<string, Recipe>();
+
+        foreach (var day in daysOfWeek)
+        {
+            var randomRecipe = recipes[random.Next(recipes.Count)];
+            menu[day] = randomRecipe;
+        }
+
+        return menu;
+    }
+}
+<style>
+    /* Button Styling */
+    .generate-button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        margin: 10px 0;
+    }
+
+    .generate-button:hover {
+        background-color: #45a049;
+    }
+
+    /* Table Styling */
+    .weekly-menu-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .weekly-menu-table th, .weekly-menu-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .weekly-menu-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: left;
+    }
+
+</style>
