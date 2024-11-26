@@ -21,17 +21,28 @@ namespace Dine.Services
         public async Task<bool> CreateRecipeAsync(Recipe recipe)
         {
             var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
 
+            var user = authState.User;
+            if (user == null)
+            {
+                return false;
+            }
+            if (user.Identity == null)
+            {
+                return false;
+            }
             // Ensure the user is authenticated
-            if (!user.Identity.IsAuthenticated)
+            if (user.Identity.IsAuthenticated)
             {
                 return false;
             }
 
             // Find the logged-in user's ID
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+            if (userId == null)
+            {
+                return false;
+            }
             // Assign the OwnerId to the logged-in user's ID
             recipe.OwnerId = userId;
 
