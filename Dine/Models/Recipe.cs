@@ -11,12 +11,12 @@ namespace Dine.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Title is required")]
-        public string Title { get; set; }
+        public required string Title { get; set; } = "Untitled Recipe";
 
         [Required(ErrorMessage = "Description is required")]
-        public string Description { get; set; }
+        public string Description { get; set; } = "";
 
-        public string ImageUrl { get; set; }
+        public string ImageUrl { get; set; } = "";
 
         // Use string for OwnerId since the AspNetUsers table uses string (GUID) for the primary key
         public string OwnerId { get; set; } // Foreign key to AspNetUsers
