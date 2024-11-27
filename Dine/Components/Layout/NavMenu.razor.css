@@ -123,3 +123,14 @@
         overflow-y: auto;
     }
 }
+.logo-image {
+    width: 40px; /* Adjust the size as needed */
+    height: 40px; /* Same as width to make it a perfect circle */
+    border-radius: 50%; /* Makes the image round */
+    object-fit: cover; /* Ensures the image fits well in the circular frame */
+}
+
+.navbar-brand {
+    font-size: 1.25rem; /* Adjust font size to align with the logo */
+}
+

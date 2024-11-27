@@ -21,7 +21,6 @@ namespace Dine.Services
         public async Task<bool> CreateRecipeAsync(Recipe recipe)
         {
             var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-
             var user = authState.User;
             if (user == null)
             {
