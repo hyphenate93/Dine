@@ -1,0 +1,61 @@
+﻿@page "/cooking/{recipeId:int}"
+@using Dine.Services
+@using Dine.Models
+@inject RecipeService RecipeService
+@rendermode InteractiveServer
+
+@code {
+    [Parameter]
+    public int RecipeId { get; set; }
+
+    private Recipe? CurrentRecipe;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentRecipe = await RecipeService.GetRecipeByIdAsync(RecipeId);
+    }
+
+    private void ToggleCrossout(MouseEventArgs e)
+    {
+        // This method is kept for the event binding but does not handle any specific state logic
+        // The actual toggle happens in the browser using CSS.
+    }
+}
+
+<h1>@CurrentRecipe?.Title</h1>
+<img src="@CurrentRecipe?.ImageUrl" alt="@CurrentRecipe?.Title" class="recipe-image w-50" />
+
+<div class="cooking-mode">
+    <div class="ingredients-section">
+        <h4>Ingredients:</h4>
+        <ul>
+            @foreach (var ingredient in CurrentRecipe?.Ingredients ?? new List<Ingredient>())
+            {
+                <li @onclick="ToggleCrossout" class="clickable-item">
+                    @ingredient.Quantity @ingredient.Unit of @ingredient.Name
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Instructions:</h4>
+        <ol>
+            @foreach (var instruction in CurrentRecipe?.Instructions ?? new List<Instruction>())
+            {
+                <li @onclick="ToggleCrossout" class="clickable-item">
+                    @instruction.InstructionText
+                </li>
+            }
+        </ol>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('clickable-item')) {
+            e.target.classList.toggle('crossout');
+        }
+    });
+</script>

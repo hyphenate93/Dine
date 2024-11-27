@@ -1,0 +1,32 @@
+.cooking-mode {
+    display: flex;
+    gap: 2rem;
+}
+
+.ingredients-section,
+.instructions-section {
+    flex: 1;
+}
+
+.ingredients-section {
+    border-right: 1px solid #ccc;
+    padding-right: 1rem;
+}
+
+.instructions-section {
+    padding-left: 1rem;
+}
+
+.clickable-item {
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+    .clickable-item:hover {
+        background-color: #f9f9f9;
+    }
+
+    .clickable-item.crossout {
+        text-decoration: line-through;
+        color: gray;
+    }
